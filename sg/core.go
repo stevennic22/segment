@@ -44,6 +44,8 @@ type Settings struct {
 func verifySignature(c *gin.Context, secrets *Settings) bool {
 	signature := c.Request.Header.Get("X-Signature")
 
+	log.Printf("Received Sig: %s", signature)
+
 	bodyBytes, err := io.ReadAll(c.Request.Body)
 	c.Request.Body.Close()
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
@@ -55,6 +57,9 @@ func verifySignature(c *gin.Context, secrets *Settings) bool {
 	h := hmac.New(sha256.New, secrets.Secret)
 	h.Write(digest)
 	signatureDigest := hex.EncodeToString(h.Sum(nil))
+
+	log.Printf("Generated Sig: %s", signatureDigest)
+
 	return signature == string(signatureDigest)
 }
 
