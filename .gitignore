@@ -1,0 +1,13 @@
+*.log
+/logs
+.env
+*.swp
+*.*.bak
+commands/*
+*.sql
+*.txt
+.env
+/vendor
+*.code-workspace
+*.md
+!README.md
