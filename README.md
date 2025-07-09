@@ -19,20 +19,6 @@ Copy `.env.example` to a directory named `static` in the `/path/to/your/content`
   - Update this value to match your `docker run` command
 
 
-**Event Format**
---------------
-
-The server expects events in JSON format. The event structure is as follows:
-```json
-{
-  "id": "",
-  "event_type": "",
-  "user_agent": "",
-  "ip": ""
-}
-```
-
-
 **Example Use Cases**
 --------------------
 
