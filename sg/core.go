@@ -9,17 +9,13 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"segment/core"
 
 	"github.com/gin-gonic/gin"
 )
 
 // Event represents an event received from Segment
-type Event struct {
-	ID        string `json:"id"`
-	Type      string `json:"event_type"`
-	UserAgent string `json:"user_agent"`
-	IP        string `json:"ip"`
-}
+type Event interface{}
 
 // In-Memory list of events
 var Events []Event
@@ -34,15 +30,12 @@ func SaveEvent(event Event) error {
 	return nil
 }
 
-// Storage for Signature Secret
-type Settings struct {
-	Secret []byte
-}
-
 // Verify X-Signature header
 // Untested
-func verifySignature(c *gin.Context, secrets *Settings) bool {
+func verifySignature(c *gin.Context, secrets *core.Settings) bool {
 	signature := c.Request.Header.Get("X-Signature")
+
+	log.Printf("Received Sig: %s", signature)
 
 	bodyBytes, err := io.ReadAll(c.Request.Body)
 	c.Request.Body.Close()
@@ -55,12 +48,15 @@ func verifySignature(c *gin.Context, secrets *Settings) bool {
 	h := hmac.New(sha256.New, secrets.Secret)
 	h.Write(digest)
 	signatureDigest := hex.EncodeToString(h.Sum(nil))
+
+	log.Printf("Generated Sig: %s", signatureDigest)
+
 	return signature == string(signatureDigest)
 }
 
 // Signature middleware configuration
 // Untested
-func SigMiddleware(c *gin.Context, secrets *Settings) {
+func SigMiddleware(c *gin.Context, secrets *core.Settings) {
 	if !verifySignature(c, secrets) {
 		c.Set("status", http.StatusUnauthorized)
 		c.Set("authorized", false)

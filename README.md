@@ -9,10 +9,41 @@ Intended to be used as a quick destination for events
 
 * GoLang 1.24 (tested version)
 
+
+**Configuring Environment Variables**
+-------------------------------
+
+Copy `.env.example` to a directory named `static` in the `/path/to/your/content` directory referenced above
+
+- `listen_port` is used to configure the port inside the container that the server will listen to.
+  - Update this value to match your `docker run` command
+
+
+**Event Format**
+--------------
+
+The server expects events in JSON format. The event structure is as follows:
+```json
+{
+  "id": "",
+  "event_type": "",
+  "user_agent": "",
+  "ip": ""
+}
+```
+
+
+**Example Use Cases**
+--------------------
+
+* Act as a Segment data source
+* Allow review of received events
+
+
 **Usage**
 -----
 
-### Running the Server
+### Running the Server (in a container)
 
 To build the docker container, navigate to the project directory and execute:
 ```bash
@@ -33,33 +64,32 @@ docker run \
 stevennic/segment-server:latest
 ```
 
-**Configuring Environment Variables**
--------------------------------
+### Running the Server (locally)
 
-Copy `.env.example` to a directory named `static` in the `/path/to/your/content` directory referenced above
-
-- `listen_port` is used to configure the port inside the container that the server will listen to.
-  - Update this value to match your `docker run` command
-- `db_enable` configures whether a connection to a database will be made
-  - Currently only configured for the Allowed Origins/CORS configuration
-
-**Event Format**
---------------
-
-The server expects events in JSON format. The event structure is as follows:
-```json
-{
-  "id": "",
-  "event_type": "",
-  "user_agent": "",
-  "ip": ""
-}
+Access directory
+Example:
 ```
-**Example Use Cases**
---------------------
+cd ~/path/to/Github/repo
+go run ./
+```
 
-* Act as a Segment data source
-* Allow review of received events
+
+**Example Directory Structure**
+--------------------
+*Default directory in container is `/usr/src/app/content`*
+
+*Fallsback to `./content` if not found/outside of a container*
+
+* content/
+  * logs/
+    * segment-*env*.log
+    * ...
+  * static/
+    * .env/
+  * direct/
+    * ajs.html
+    * ...
+
 
 **Troubleshooting**
 ---------------
