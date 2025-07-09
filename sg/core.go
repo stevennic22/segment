@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"segment/core"
 
 	"github.com/gin-gonic/gin"
 )
@@ -29,14 +30,9 @@ func SaveEvent(event Event) error {
 	return nil
 }
 
-// Storage for Signature Secret
-type Settings struct {
-	Secret []byte
-}
-
 // Verify X-Signature header
 // Untested
-func verifySignature(c *gin.Context, secrets *Settings) bool {
+func verifySignature(c *gin.Context, secrets *core.Settings) bool {
 	signature := c.Request.Header.Get("X-Signature")
 
 	log.Printf("Received Sig: %s", signature)
@@ -60,7 +56,7 @@ func verifySignature(c *gin.Context, secrets *Settings) bool {
 
 // Signature middleware configuration
 // Untested
-func SigMiddleware(c *gin.Context, secrets *Settings) {
+func SigMiddleware(c *gin.Context, secrets *core.Settings) {
 	if !verifySignature(c, secrets) {
 		c.Set("status", http.StatusUnauthorized)
 		c.Set("authorized", false)

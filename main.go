@@ -7,24 +7,31 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"regexp"
 	"segment/core"
-	"segment/database"
 	"segment/sg"
-	"strings"
-	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-var base_file_path string = "/usr/src/app/content/"
+func AllowedOriginCheck(origin string) bool {
+	trusted_domain := core.Config.RetrieveValue("trusted_domain")
 
-var static_file_path string = path.Join(base_file_path, "static")
+	regexStr := fmt.Sprintf("^http(s)*://(.*.)*(%s)$", trusted_domain)
+	r := regexp.MustCompile(regexStr)
 
-func generateCorsConfig(h *database.DBHandler) gin.HandlerFunc {
+	if r.MatchString(origin) {
+		return true
+	} else {
+		return false
+	}
+}
+
+func generateCorsConfig() gin.HandlerFunc {
 	corsConfig := cors.DefaultConfig()
 
-	corsConfig.AllowOriginFunc = h.AllowedOriginCheck
+	corsConfig.AllowOriginFunc = AllowedOriginCheck
 	corsConfig.AllowCredentials = true
 	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 
@@ -54,7 +61,7 @@ func generateLoggerConfig() gin.HandlerFunc {
 
 func init_logging(environment string) {
 	// Configure paths
-	logFileDir := path.Join(base_file_path, "logs")
+	logFileDir := path.Join(core.Config.BaseFilePath, "logs")
 	logFilePath := path.Join(logFileDir, "segment-"+environment+".log")
 
 	// Create directory
@@ -80,60 +87,33 @@ func init_logging(environment string) {
 func init() {
 	gin.SetMode(gin.ReleaseMode)
 	gin.DisableConsoleColor()
-	core.CurrentEnv.Location = path.Join(static_file_path, ".env")
 
-	var environment string = core.CurrentEnv.RetrieveValue("environment")
+	core.Config.Location = path.Join(core.Config.FilePath("static"), ".env")
+	core.Config.InitEnvFile()
+
+	var environment string = core.Config.RetrieveValue("environment")
 	init_logging(environment)
 }
 
 func main() {
 	// Load webhook secret
-	secretsConfig := sg.Settings{
-		Secret: []byte(core.CurrentEnv.RetrieveValue("webhooksecret")),
-	}
-
-	var enableDBVar = core.CurrentEnv.RetrieveValue("db_enable")
-	var enableDB bool
-
-	if strings.ToLower(enableDBVar) == "true" {
-		enableDB = true
-	} else {
-		enableDB = false
-	}
-
-	var h database.DBHandler
-
-	if enableDB {
-		// Connect to Database and add to handler struct
-		db, dbInitErr := database.ConnectDB()
-		core.CheckError(dbInitErr, true)
-		db.SetMaxIdleConns(2)
-		db.SetConnMaxLifetime(time.Hour)
-
-		h = *database.NewDBHandler(db)
+	secretsConfig := core.Settings{
+		Secret: []byte(core.Config.RetrieveValue("webhooksecret")),
 	}
 
 	// Initialize gin engine
 	r := gin.New()
 
 	// Add upstream proxy config
-	r.SetTrustedProxies([]string{core.CurrentEnv.RetrieveValue("trusted_proxy")})
+	r.SetTrustedProxies([]string{core.Config.RetrieveValue("trusted_proxy")})
 	r.TrustedPlatform = "X-Client-IP"
 
 	// Use middlewares
-	// Conditionally disable CORS config if no DB
-	if enableDB {
-		r.Use(
-			generateCorsConfig(&h),
-			generateLoggerConfig(),
-			gin.Recovery(),
-		)
-	} else {
-		r.Use(
-			generateLoggerConfig(),
-			gin.Recovery(),
-		)
-	}
+	r.Use(
+		generateCorsConfig(),
+		generateLoggerConfig(),
+		gin.Recovery(),
+	)
 
 	// Index page
 	r.GET("/", func(c *gin.Context) { c.Status(http.StatusOK) })
@@ -149,7 +129,7 @@ func main() {
 	sg.ConfigureRoutes(r.Group("/events", func(c *gin.Context) { sg.SigMiddleware(c, &secretsConfig) }))
 
 	// Configure port and run
-	var serverPort string = ":" + core.CurrentEnv.RetrieveValue("listen_port")
-	log.Printf("Starting server at %s\n", serverPort[1:])
-	r.Run(serverPort) // listen and serve on 0.0.0.0:serverPort
+	core.Config.FetchServerPort()
+	log.Printf("Starting server at %s\n", core.Config.ServerPort[1:])
+	r.Run(core.Config.ServerPort) // listen and serve on 0.0.0.0:serverPort
 }
