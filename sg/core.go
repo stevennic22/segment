@@ -14,12 +14,7 @@ import (
 )
 
 // Event represents an event received from Segment
-type Event struct {
-	ID        string `json:"id"`
-	Type      string `json:"event_type"`
-	UserAgent string `json:"user_agent"`
-	IP        string `json:"ip"`
-}
+type Event interface{}
 
 // In-Memory list of events
 var Events []Event
