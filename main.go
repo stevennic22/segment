@@ -141,6 +141,10 @@ func main() {
 	// For healthcheck
 	r.GET("/state", func(c *gin.Context) { c.Status(http.StatusOK) })
 
+	r.StaticFile("/favicon.ico", "./favicon.ico")
+
+	r.Static("/content", path.Join(core.Config.BaseFilePath, "direct"))
+
 	// Segment Event routes
 	sg.ConfigureRoutes(r.Group("/events", func(c *gin.Context) { sg.SigMiddleware(c, &secretsConfig) }))
 
