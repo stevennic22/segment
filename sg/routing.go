@@ -15,7 +15,7 @@ func ConfigureRoutes(rG *gin.RouterGroup) {
 
 	// Lists recent events
 	rG.GET("/list", func(c *gin.Context) {
-		// Simplly returns a list of the in-memory events from earlier
+		// Simply returns a list of the in-memory events from earlier
 		c.JSON(http.StatusOK, &struct {
 			Events []Event `json:"events"`
 		}{Events})
