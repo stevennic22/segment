@@ -123,7 +123,7 @@ func main() {
 
 	r.StaticFile("/favicon.ico", "./favicon.ico")
 
-	r.Static("/content", path.Join(core.Config.BaseFilePath, "direct"))
+	r.StaticFS("/content", gin.Dir(path.Join(core.Config.BaseFilePath, "direct"), true))
 
 	// Segment Event routes
 	sg.ConfigureRoutes(r.Group("/events", func(c *gin.Context) { sg.SigMiddleware(c, &secretsConfig) }))
