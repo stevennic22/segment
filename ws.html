@@ -146,6 +146,11 @@
         cursor: not-allowed;
       }
 
+      .code-content {
+        background: #d5d5d5;
+        color: #2a2a2a;
+      }
+
       .status {
         margin: 10px 0;
         padding: 10px;
@@ -250,6 +255,9 @@
         <div class="input-group">
           <label for="websocket-url">WebSocket URL:</label>
           <input type="text" id="websocket-url" value="ws://localhost:8080/ws/">
+          <p style="font-size: 12px; display: inline;">If serving via TLS/HTTPS, use </p>
+          <p class="code-content" style="font-size: 12px; display: inline;">wss://</p>
+          <p style="font-size: 12px; display: inline;"> instead</p>
         </div>
 
         <button id="connect-btn" class="btn-primary">Connect</button>
