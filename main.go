@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"segment/core"
 	"segment/sg"
+	"segment/wsSrv"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -125,11 +126,24 @@ func main() {
 
 	r.StaticFS("/content", gin.Dir(path.Join(core.Config.BaseFilePath, "direct"), true))
 
+	hub := wsSrv.NewHub()
+	go hub.Run()
+
 	// Segment Event routes
-	sg.ConfigureRoutes(r.Group("/events", func(c *gin.Context) { sg.SigMiddleware(c, &secretsConfig) }))
+	sg.ConfigureRoutes(
+		r.Group("/events", func(c *gin.Context) {
+			sg.SigMiddleware(c, &secretsConfig)
+		}),
+		hub,
+	)
+
+	wsSrv.WSInit(
+		r.Group("/ws"),
+		hub,
+	)
 
 	// Configure port and run
 	core.Config.FetchServerPort()
 	log.Printf("Starting server at %s\n", core.Config.ServerPort[1:])
-	r.Run(core.Config.ServerPort) // listen and serve on 0.0.0.0:serverPort
+	log.Fatal(r.Run(core.Config.ServerPort)) // listen and serve on 0.0.0.0:serverPort
 }

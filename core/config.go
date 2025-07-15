@@ -99,3 +99,23 @@ func (d *DotEnv) RetrieveValue(key string) string {
 
 	return d.LastLoaded.Value
 }
+
+// Event represents the structure of events to be broadcast
+type Event struct {
+	Type        string `json:"type"`
+	Description string
+	Data        map[string]interface{} `json:"data"`
+	Timestamp   time.Time              `json:"timestamp"`
+}
+
+// In-Memory list of events
+var Events []Event
+
+func (e *Event) ParseEventTime() {
+	ts := e.Data["timestamp"].(string)
+
+	pt, err := time.Parse("2006-01-02T15:04:05.000Z", ts)
+	CheckError(err, false)
+
+	e.Timestamp = pt
+}

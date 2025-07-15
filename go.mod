@@ -5,6 +5,7 @@ go 1.24.4
 require (
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.10.1
+	github.com/gorilla/websocket v1.5.3
 	github.com/joho/godotenv v1.5.1
 )
 

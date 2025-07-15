@@ -3,11 +3,14 @@ package sg
 import (
 	"log"
 	"net/http"
+	"segment/core"
+	"segment/wsSrv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-func ConfigureRoutes(rG *gin.RouterGroup) {
+func ConfigureRoutes(rG *gin.RouterGroup, hub *wsSrv.Hub) {
 	// Index page, redirects
 	rG.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusTemporaryRedirect, "/events/list")
@@ -17,18 +20,28 @@ func ConfigureRoutes(rG *gin.RouterGroup) {
 	rG.GET("/list", func(c *gin.Context) {
 		// Simply returns a list of the in-memory events from earlier
 		c.JSON(http.StatusOK, &struct {
-			Events []Event `json:"events"`
-		}{Events})
+			Events []core.Event `json:"events"`
+		}{core.Events})
 	})
 
 	// Set up a route to receive events from Segment
 	rG.POST("/create", func(c *gin.Context) {
-		var event Event
-		if err := c.BindJSON(&event); err != nil {
-			log.Printf("Binding error: %s", err)
-			c.JSON(400, gin.H{"error": "Invalid request body"})
+		var event core.Event
+
+		var requestData map[string]interface{}
+		if err := c.ShouldBindJSON(&requestData); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
 			return
 		}
+
+		event = core.Event{
+			Type:        requestData["type"].(string),
+			Description: requestData["event"].(string),
+			Data:        requestData,
+			Timestamp:   time.Now(),
+		}
+
+		event.ParseEventTime()
 
 		// Process the received event (in this case we just log it)
 		log.Printf("Received event: %+v\n", event)
@@ -39,6 +52,13 @@ func ConfigureRoutes(rG *gin.RouterGroup) {
 			return
 		}
 
-		c.Status(200)
+		// Broadcast to all WebSocket connections
+		hub.BroadcastEvent(event)
+
+		c.JSON(http.StatusOK, gin.H{
+			"message":       "Event created and broadcast",
+			"clients_count": hub.GetClientCount(),
+			"event_type":    event.Type,
+		})
 	})
 }
