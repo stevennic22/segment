@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"regexp"
 	"segment/core"
 	"segment/sg"
 	"segment/wsSrv"
@@ -16,23 +15,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AllowedOriginCheck(origin string) bool {
-	trusted_domain := core.Config.RetrieveValue("trusted_domain")
-
-	regexStr := fmt.Sprintf("^http(s)*://(.*.)*(%s)$", trusted_domain)
-	r := regexp.MustCompile(regexStr)
-
-	if r.MatchString(origin) {
-		return true
-	} else {
-		return false
-	}
-}
-
 func generateCorsConfig() gin.HandlerFunc {
 	corsConfig := cors.DefaultConfig()
 
-	corsConfig.AllowOriginFunc = AllowedOriginCheck
+	corsConfig.AllowOriginFunc = core.AllowedOriginCheck
 	corsConfig.AllowCredentials = true
 	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 

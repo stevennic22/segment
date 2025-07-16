@@ -1,7 +1,10 @@
 package core
 
 import (
+	"fmt"
 	"log"
+	"regexp"
+	"strings"
 )
 
 func CheckError(err error, hardStop bool) bool {
@@ -14,4 +17,20 @@ func CheckError(err error, hardStop bool) bool {
 	}
 
 	return (false)
+}
+
+func AllowedOriginCheck(origin string) bool {
+	trusted_domain := Config.RetrieveValue("trusted_domain")
+
+	regexStr := fmt.Sprintf("^http(s)*://(.*.)*(%s)$", trusted_domain)
+	r := regexp.MustCompile(regexStr)
+
+	if r.MatchString(origin) {
+		return true
+	} else {
+		if strings.Contains(origin, "vscode-webview") || strings.Contains(origin, "moz-extension") {
+			return true
+		}
+		return false
+	}
 }

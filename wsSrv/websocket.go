@@ -89,7 +89,7 @@ func (h *Hub) GetClientCount() int {
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		return true // Allow all origins in this example
+		return core.AllowedOriginCheck(r.Header.Get("Origin"))
 	},
 }
 
