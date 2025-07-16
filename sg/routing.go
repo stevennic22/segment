@@ -28,6 +28,7 @@ func ConfigureRoutes(rG *gin.RouterGroup, hub *wsSrv.Hub) {
 		var event core.Event
 
 		if err := c.ShouldBindJSON(&event); err != nil {
+			log.Printf("Binding error: %s", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
 			return
 		}
