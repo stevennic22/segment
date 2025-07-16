@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 	"path"
@@ -102,20 +103,24 @@ func (d *DotEnv) RetrieveValue(key string) string {
 
 // Event represents the structure of events to be broadcast
 type Event struct {
-	Type        string `json:"type"`
-	Description string
-	Data        map[string]interface{} `json:"data"`
+	Type        string                 `json:"type"`
+	Description string                 `json:"event"`
+	Data        map[string]interface{} `json:"raw_data"`
 	Timestamp   time.Time              `json:"timestamp"`
 }
 
 // In-Memory list of events
 var Events []Event
 
-func (e *Event) ParseEventTime() {
-	ts := e.Data["timestamp"].(string)
+func (e *Event) UnmarshalJSON(data []byte) error {
+	var rawMap map[string]interface{}
+	if err := json.Unmarshal(data, &rawMap); err != nil {
+		return err
+	}
 
-	pt, err := time.Parse("2006-01-02T15:04:05.000Z", ts)
-	CheckError(err, false)
+	e.Data = rawMap
 
-	e.Timestamp = pt
+	type TempRequestData Event
+	temp := (*TempRequestData)(e)
+	return json.Unmarshal(data, temp)
 }

@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"segment/core"
 	"segment/wsSrv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,20 +27,10 @@ func ConfigureRoutes(rG *gin.RouterGroup, hub *wsSrv.Hub) {
 	rG.POST("/create", func(c *gin.Context) {
 		var event core.Event
 
-		var requestData map[string]interface{}
-		if err := c.ShouldBindJSON(&requestData); err != nil {
+		if err := c.ShouldBindJSON(&event); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
 			return
 		}
-
-		event = core.Event{
-			Type:        requestData["type"].(string),
-			Description: requestData["event"].(string),
-			Data:        requestData,
-			Timestamp:   time.Now(),
-		}
-
-		event.ParseEventTime()
 
 		// Process the received event (in this case we just log it)
 		log.Printf("Received event: %+v\n", event)
