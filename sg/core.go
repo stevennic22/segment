@@ -18,6 +18,11 @@ import (
 func SaveEvent(event core.Event) error {
 	// To Do: Connect DB functions to log event
 	// For now, it'll simply use an in-memory slice
+	if core.FindEventIndexByMessageID(event.MessageID) != -1 {
+		res := fmt.Sprintf("Message with Id (%s) already exists", event.MessageID)
+		return fmt.Errorf("%s", res)
+	}
+
 	log.Printf("Saving event: %+v\n", event)
 	core.Events = append(core.Events, event)
 

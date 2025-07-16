@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"segment/core"
 	"segment/wsSrv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,7 +38,16 @@ func ConfigureRoutes(rG *gin.RouterGroup, hub *wsSrv.Hub) {
 		log.Printf("Received event: %+v\n", event)
 
 		// Save the event to our stubbed out database connection
-		if err := SaveEvent(event); err != nil {
+		saveErr := SaveEvent(event)
+		if core.CheckError(saveErr, false) {
+			if strings.Contains(saveErr.Error(), "Message with Id ") && strings.Contains(saveErr.Error(), ") already exists") {
+				c.JSON(http.StatusOK, gin.H{
+					"message":       "Duplicate event received.",
+					"clients_count": hub.GetClientCount(),
+					"event_type":    event.Type,
+				})
+				return
+			}
 			c.JSON(500, gin.H{"error": "Failed to process event"})
 			return
 		}

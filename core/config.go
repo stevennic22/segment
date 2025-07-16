@@ -106,6 +106,7 @@ type Event struct {
 	Type        string                 `json:"type"`
 	Description string                 `json:"event"`
 	Data        map[string]interface{} `json:"raw_data"`
+	MessageID   string                 `json:"messageId"`
 	Timestamp   time.Time              `json:"timestamp"`
 }
 
@@ -123,4 +124,13 @@ func (e *Event) UnmarshalJSON(data []byte) error {
 	type TempRequestData Event
 	temp := (*TempRequestData)(e)
 	return json.Unmarshal(data, temp)
+}
+
+func FindEventIndexByMessageID(messageID string) int {
+	for i, event := range Events {
+		if event.MessageID == messageID {
+			return i
+		}
+	}
+	return -1 // Not found
 }
