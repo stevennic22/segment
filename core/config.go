@@ -104,10 +104,10 @@ func (d *DotEnv) RetrieveValue(key string) string {
 // Event represents the structure of events to be broadcast
 type Event struct {
 	Type        string                 `json:"type"`
-	Description string                 `json:"event"`
-	Data        map[string]interface{} `json:"raw_data"`
 	MessageID   string                 `json:"messageId"`
 	Timestamp   time.Time              `json:"timestamp"`
+	Description string                 `json:"event"`
+	Data        map[string]interface{} `json:"raw_data"`
 }
 
 // In-Memory list of events
