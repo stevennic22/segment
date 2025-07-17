@@ -28,9 +28,11 @@ func AllowedOriginCheck(origin string) bool {
 	if r.MatchString(origin) {
 		return true
 	} else {
-		if strings.Contains(origin, "vscode-webview") || strings.Contains(origin, "moz-extension") {
+		trustExtensions := Config.RetrieveValue("trust_extensions")
+		if trustExtensions == "true" && (strings.Contains(origin, "vscode-webview") || strings.Contains(origin, "moz-extension")) {
 			return true
+		} else {
+			return false
 		}
-		return false
 	}
 }
