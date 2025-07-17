@@ -22,7 +22,7 @@ func CheckError(err error, hardStop bool) bool {
 func AllowedOriginCheck(origin string) bool {
 	trusted_domain := Config.RetrieveValue("trusted_domain")
 
-	regexStr := fmt.Sprintf("^http(s)*://(.*.)*(%s)$", trusted_domain)
+	regexStr := fmt.Sprintf("^http(s)*://(.*\\.)*(%s)$", trusted_domain)
 	r := regexp.MustCompile(regexStr)
 
 	if r.MatchString(origin) {
