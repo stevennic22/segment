@@ -86,7 +86,7 @@ go run ./
     * segment-*env*.log
     * ...
   * static/
-    * .env/
+    * .env
   * direct/
     * ajs.html
     * ...
