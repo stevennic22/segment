@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebSocket Event Viewer</title>
+    <style>
+      body, input {
+        font-family: "TwilioSans", "barlow", sans-serif;
+        font-weight: 400;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+
+
+      @font-face {
+        font-family: "barlow";
+        src: url("https://stevennic.me/fonts/Barlow-Regular.woff") format("woff");
+        font-weight: 400;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: "TwilioSans";
+        src: url("https://stevennic.me/fonts/TwilioSansMono-Regular.woff2") format("woff2");
+        font-weight: 400;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: "barlow";
+        src: url("https://stevennic.me/fonts/Barlow-Italic.woff") format("woff");
+        font-weight: 400;
+        font-style: italic;
+      }
+
+      @font-face {
+        font-family: "TwilioSans";
+        src: url("https://stevennic.me/fonts/TwilioSansMono-RegularItl.woff2") format("woff2");
+        font-weight: 400;
+        font-style: italic;
+      }
+
+      @font-face {
+        font-family: "barlow";
+        src: url("https://stevennic.me/fonts/Barlow-Medium.woff") format("woff");
+        font-weight: 500;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: "TwilioSans";
+        src: url("https://stevennic.me/fonts/TwilioSansMono-Medium.woff2") format("woff2");
+        font-weight: 500;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: "barlow";
+        src: url("https://stevennic.me/fonts/Barlow-MediumItalic.woff") format("woff");
+        font-weight: 500;
+        font-style: italic;
+      }
+
+      @font-face {
+        font-family: "TwilioSans";
+        src: url("https://stevennic.me/fonts/TwilioSansMono-MediumItl.woff2") format("woff2");
+        font-weight: 500;
+        font-style: italic;
+      }
+
+      @font-face {
+        font-family: "barlow";
+        src: url("https://stevennic.me/fonts/Barlow-Bold.woff") format("woff");
+        font-weight: 700;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: "TwilioSans";
+        src: url("https://stevennic.me/fonts/TwilioSansMono-Bold.woff2") format("woff2");
+        font-weight: 700;
+        font-style: normal;
+      }
+
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .controls {
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 5px;
+      }
+
+      .input-group {
+        margin-bottom: 15px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 400;
+      }
+
+      input[type="text"] {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+
+      button {
+        padding: 10px 20px;
+        margin-right: 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      .btn-primary {
+        background: #007bff;
+        color: white;
+      }
+
+      .btn-danger {
+        background: #dc3545;
+        color: white;
+      }
+
+      .btn-secondary {
+        background: #6c757d;
+        color: white;
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .code-content {
+        background: #d5d5d5;
+        color: #2a2a2a;
+      }
+
+      .status {
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 4px;
+        font-weight: bold;
+      }
+
+      .status-connected {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .status-disconnected {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .status-connecting {
+        background: #fff3cd;
+        color: #856404;
+      }
+
+      .events-section {
+        margin-top: 20px;
+      }
+
+      .events-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .event-count {
+        background: #007bff;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+      }
+
+      .events-list {
+        max-height: 500px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+
+      .event-item {
+        border-bottom: 1px solid #eee;
+        padding: 15px;
+        background: white;
+      }
+
+      .event-item:last-child {
+        border-bottom: none;
+      }
+
+      .event-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      .event-type {
+        background: #007bff;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .event-time {
+        color: #666;
+        font-size: 12px;
+      }
+
+      .event-data {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 12px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+
+      .no-events {
+        text-align: center;
+        color: #666;
+        padding: 40px;
+        background: #f8f9fa;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>WebSocket Event Viewer</h1>
+
+      <div class="controls">
+        <div class="input-group">
+          <label for="websocket-url">WebSocket URL:</label>
+          <input type="text" id="websocket-url" value="ws://localhost:8080/ws/">
+          <p style="font-size: 12px; display: inline;">If serving via TLS/HTTPS, use </p>
+          <p class="code-content" style="font-size: 12px; display: inline;">wss://</p>
+          <p style="font-size: 12px; display: inline;"> instead</p>
+        </div>
+
+        <button id="connect-btn" class="btn-primary">Connect</button>
+        <button id="disconnect-btn" class="btn-danger" disabled>
+          Disconnect
+        </button>
+        <button id="clear-btn" class="btn-secondary">Clear Events</button>
+
+        <div id="status" class="status status-disconnected">
+          Status: Disconnected
+        </div>
+      </div>
+
+      <div class="events-section">
+        <div class="events-header">
+          <h2>Events</h2>
+          <div class="event-count"><span id="event-count">0</span> events</div>
+        </div>
+
+        <div id="events-list" class="events-list">
+          <div class="no-events">
+            Connect to WebSocket to start receiving events...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let socket = null;
+      let isConnected = false;
+      let eventCount = 0;
+
+      const urlInput = document.getElementById("websocket-url");
+      const connectBtn = document.getElementById("connect-btn");
+      const disconnectBtn = document.getElementById("disconnect-btn");
+      const clearBtn = document.getElementById("clear-btn");
+      const status = document.getElementById("status");
+      const eventCountDisplay = document.getElementById("event-count");
+      const eventsList = document.getElementById("events-list");
+
+      connectBtn.addEventListener("click", connect);
+      disconnectBtn.addEventListener("click", disconnect);
+      clearBtn.addEventListener("click", clearEvents);
+
+      function connect() {
+        const url = urlInput.value.trim();
+        if (!url) {
+          alert("Please enter a WebSocket URL");
+          return;
+        }
+
+        updateStatus("connecting", "Connecting...");
+        connectBtn.disabled = true;
+
+        socket = new WebSocket(url);
+
+        socket.onopen = function () {
+          isConnected = true;
+          updateStatus("connected", "Connected");
+          connectBtn.disabled = true;
+          disconnectBtn.disabled = false;
+          urlInput.disabled = true;
+          console.log("WebSocket connected");
+        };
+
+        socket.onmessage = function (event) {
+          try {
+            const data = JSON.parse(event.data);
+            displayEvent(data);
+          } catch (error) {
+            displayEvent({
+              type: "raw_message",
+              data: { message: event.data },
+              timestamp: new Date().toISOString(),
+            });
+          }
+        };
+
+        socket.onclose = function (event) {
+          isConnected = false;
+          updateStatus("disconnected", "Disconnected");
+          connectBtn.disabled = false;
+          disconnectBtn.disabled = true;
+          urlInput.disabled = false;
+          console.log("WebSocket disconnected");
+        };
+
+        socket.onerror = function (error) {
+          console.error("WebSocket error:", error);
+          updateStatus("disconnected", "Connection Error");
+          connectBtn.disabled = false;
+          disconnectBtn.disabled = true;
+          urlInput.disabled = false;
+        };
+      }
+
+      function disconnect() {
+        if (socket) {
+          socket.close();
+        }
+      }
+
+      function updateStatus(type, message) {
+        status.className = `status status-${type}`;
+        status.textContent = `Status: ${message}`;
+      }
+
+      function displayEvent(eventData) {
+        // Remove "no events" message
+        const noEventsMsg = eventsList.querySelector(".no-events");
+        if (noEventsMsg) {
+          noEventsMsg.remove();
+        }
+
+        eventCount++;
+        eventCountDisplay.textContent = eventCount;
+
+        const eventElement = document.createElement("div");
+        eventElement.className = "event-item";
+
+        const timestamp = eventData.timestamp
+          ? new Date(eventData.timestamp).toLocaleString()
+          : new Date().toLocaleString();
+
+        eventElement.innerHTML = `
+                <div class="event-header">
+                    <div class="event-type">${eventData.type || "unknown"}</div>
+                    <div class="event-time">${timestamp}</div>
+                </div>
+                <div class="event-data">${JSON.stringify(
+                  eventData.data || eventData,
+                  null,
+                  2
+                )}</div>
+            `;
+
+        eventsList.insertBefore(eventElement, eventsList.firstChild);
+
+        // Keep only last 50 events
+        const events = eventsList.querySelectorAll(".event-item");
+        if (events.length > 50) {
+          events[events.length - 1].remove();
+        }
+      }
+
+      function clearEvents() {
+        eventsList.innerHTML = `
+                <div class="no-events">
+                    Events cleared. ${
+                      isConnected
+                        ? "Listening for new events..."
+                        : "Connect to WebSocket to start receiving events."
+                    }
+                </div>
+            `;
+        eventCount = 0;
+        eventCountDisplay.textContent = eventCount;
+      }
+    </script>
+  </body>
+</html>

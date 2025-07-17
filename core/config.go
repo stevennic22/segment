@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 	"path"
@@ -47,9 +48,11 @@ type DotEnv struct {
 }
 
 func (d *DotEnv) loadFile() {
-	loadErr := godotenv.Load(d.Location)
+	loadErr := godotenv.Overload(d.Location)
 
 	CheckError(loadErr, true)
+
+	d.LastLoaded.Retrieved = time.Now()
 }
 
 func (d *DotEnv) InitEnvFile() {
@@ -68,6 +71,8 @@ func (d *DotEnv) InitEnvFile() {
 			}
 		}
 	}
+
+	d.LastLoaded.Retrieved = time.Now()
 }
 
 func (d *DotEnv) fileModMoreRecent() bool {
@@ -77,9 +82,7 @@ func (d *DotEnv) fileModMoreRecent() bool {
 		log.Fatalf("Error loading file stats: %s", err)
 	}
 
-	modifiedtime := file.ModTime()
-
-	return (modifiedtime.After(d.LastLoaded.Retrieved))
+	return (file.ModTime().UTC().After(d.LastLoaded.Retrieved.UTC()))
 }
 
 func (d *DotEnv) RetrieveValue(key string) string {
@@ -87,15 +90,50 @@ func (d *DotEnv) RetrieveValue(key string) string {
 	// Check if:
 	//  We've already retrieved that value
 	//  The .env file has been updated
-	if d.LastLoaded.Key == key && !d.fileModMoreRecent() {
-		return (d.LastLoaded.Value)
+	if d.fileModMoreRecent() {
+		d.loadFile()
+	} else {
+		if d.LastLoaded.Key == key {
+			return d.LastLoaded.Value
+		}
 	}
-
-	d.loadFile()
 
 	d.LastLoaded.Key = key
 	d.LastLoaded.Value = os.Getenv(key)
-	d.LastLoaded.Retrieved = time.Now()
 
 	return d.LastLoaded.Value
+}
+
+// Event represents the structure of events to be broadcast
+type Event struct {
+	Type        string                 `json:"type"`
+	MessageID   string                 `json:"messageId"`
+	Timestamp   time.Time              `json:"timestamp"`
+	Description string                 `json:"event"`
+	Data        map[string]interface{} `json:"raw_data"`
+}
+
+// In-Memory list of events
+var Events []Event
+
+func (e *Event) UnmarshalJSON(data []byte) error {
+	var rawMap map[string]interface{}
+	if err := json.Unmarshal(data, &rawMap); err != nil {
+		return err
+	}
+
+	e.Data = rawMap
+
+	type TempRequestData Event
+	temp := (*TempRequestData)(e)
+	return json.Unmarshal(data, temp)
+}
+
+func FindEventIndexByMessageID(messageID string) int {
+	for i, event := range Events {
+		if event.MessageID == messageID {
+			return i
+		}
+	}
+	return -1 // Not found
 }

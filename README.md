@@ -17,6 +17,7 @@ Copy `.env.example` to a directory named `static` in the `/path/to/your/content`
 
 - `listen_port` is used to configure the port inside the container that the server will listen to.
   - Update this value to match your `docker run` command
+  - Defaults to `8080`
 
 
 **Example Use Cases**
@@ -59,6 +60,20 @@ cd ~/path/to/Github/repo
 go run ./
 ```
 
+### Accessible resources
+
+`/events/create` is where events are ingested
+
+`/events/list` will show a list of events since the server has been up
+
+`/content/*` is an exposed directory. Files stored under the configured local directory `/content/direct/` will be available here. Useful for testing Segment source scripts.
+
+`/ws/client` exposes a websocket client to connect to live events
+
+`/ws` endpoint to connect to websocket
+
+`/ws/health` and `/ws/clients` give a JSON output of websocket health and connected clients.
+
 
 **Example Directory Structure**
 --------------------
@@ -68,10 +83,10 @@ go run ./
 
 * content/
   * logs/
-    * segment-*env*.log
+    * segment-\*env\*.log
     * ...
   * static/
-    * .env/
+    * .env
   * direct/
     * ajs.html
     * ...

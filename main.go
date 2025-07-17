@@ -7,31 +7,18 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"regexp"
 	"segment/core"
 	"segment/sg"
+	"segment/wsSrv"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-func AllowedOriginCheck(origin string) bool {
-	trusted_domain := core.Config.RetrieveValue("trusted_domain")
-
-	regexStr := fmt.Sprintf("^http(s)*://(.*.)*(%s)$", trusted_domain)
-	r := regexp.MustCompile(regexStr)
-
-	if r.MatchString(origin) {
-		return true
-	} else {
-		return false
-	}
-}
-
 func generateCorsConfig() gin.HandlerFunc {
 	corsConfig := cors.DefaultConfig()
 
-	corsConfig.AllowOriginFunc = AllowedOriginCheck
+	corsConfig.AllowOriginFunc = core.AllowedOriginCheck
 	corsConfig.AllowCredentials = true
 	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 
@@ -125,11 +112,24 @@ func main() {
 
 	r.StaticFS("/content", gin.Dir(path.Join(core.Config.BaseFilePath, "direct"), true))
 
+	hub := wsSrv.NewHub()
+	go hub.Run()
+
 	// Segment Event routes
-	sg.ConfigureRoutes(r.Group("/events", func(c *gin.Context) { sg.SigMiddleware(c, &secretsConfig) }))
+	sg.ConfigureRoutes(
+		r.Group("/events", func(c *gin.Context) {
+			sg.SigMiddleware(c, &secretsConfig)
+		}),
+		hub,
+	)
+
+	wsSrv.WSInit(
+		r.Group("/ws"),
+		hub,
+	)
 
 	// Configure port and run
 	core.Config.FetchServerPort()
 	log.Printf("Starting server at %s\n", core.Config.ServerPort[1:])
-	r.Run(core.Config.ServerPort) // listen and serve on 0.0.0.0:serverPort
+	log.Fatal(r.Run(core.Config.ServerPort)) // listen and serve on 0.0.0.0:serverPort
 }

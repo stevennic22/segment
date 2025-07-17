@@ -14,18 +14,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Event represents an event received from Segment
-type Event interface{}
-
-// In-Memory list of events
-var Events []Event
-
 // Save/Log new events
-func SaveEvent(event Event) error {
+func SaveEvent(event core.Event) error {
 	// To Do: Connect DB functions to log event
 	// For now, it'll simply use an in-memory slice
+	if core.FindEventIndexByMessageID(event.MessageID) != -1 {
+		res := fmt.Sprintf("Message with Id (%s) already exists", event.MessageID)
+		return fmt.Errorf("%s", res)
+	}
+
 	log.Printf("Saving event: %+v\n", event)
-	Events = append(Events, event)
+	core.Events = append(core.Events, event)
 
 	return nil
 }
