@@ -48,9 +48,11 @@ type DotEnv struct {
 }
 
 func (d *DotEnv) loadFile() {
-	loadErr := godotenv.Load(d.Location)
+	loadErr := godotenv.Overload(d.Location)
 
 	CheckError(loadErr, true)
+
+	d.LastLoaded.Retrieved = time.Now()
 }
 
 func (d *DotEnv) InitEnvFile() {
@@ -69,6 +71,8 @@ func (d *DotEnv) InitEnvFile() {
 			}
 		}
 	}
+
+	d.LastLoaded.Retrieved = time.Now()
 }
 
 func (d *DotEnv) fileModMoreRecent() bool {
@@ -78,9 +82,7 @@ func (d *DotEnv) fileModMoreRecent() bool {
 		log.Fatalf("Error loading file stats: %s", err)
 	}
 
-	modifiedtime := file.ModTime()
-
-	return (modifiedtime.After(d.LastLoaded.Retrieved))
+	return (file.ModTime().UTC().After(d.LastLoaded.Retrieved.UTC()))
 }
 
 func (d *DotEnv) RetrieveValue(key string) string {
@@ -88,15 +90,16 @@ func (d *DotEnv) RetrieveValue(key string) string {
 	// Check if:
 	//  We've already retrieved that value
 	//  The .env file has been updated
-	if d.LastLoaded.Key == key && !d.fileModMoreRecent() {
-		return (d.LastLoaded.Value)
+	if d.fileModMoreRecent() {
+		d.loadFile()
+	} else {
+		if d.LastLoaded.Key == key {
+			return d.LastLoaded.Value
+		}
 	}
-
-	d.loadFile()
 
 	d.LastLoaded.Key = key
 	d.LastLoaded.Value = os.Getenv(key)
-	d.LastLoaded.Retrieved = time.Now()
 
 	return d.LastLoaded.Value
 }
