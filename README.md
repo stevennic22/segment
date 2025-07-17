@@ -83,7 +83,7 @@ go run ./
 
 * content/
   * logs/
-    * segment-*env*.log
+    * segment-\*env\*.log
     * ...
   * static/
     * .env
